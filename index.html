@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Stopwatch & Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 15px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .display {
+            text-align: center;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .time-display {
+            font-size: 60px;
+            font-weight: 300;
+            color: #333;
+            letter-spacing: 2px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .milliseconds {
+            font-size: 30px;
+            color: #999;
+            margin-left: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .control-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .pause-btn {
+            background: #ff9500;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 149, 0, 0.4);
+        }
+
+        .pause-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 149, 0, 0.5);
+        }
+
+        .reset-btn {
+            background: #e74c3c;
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+        }
+
+        .lap-btn {
+            background: #00c896;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 200, 150, 0.4);
+        }
+
+        .lap-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 200, 150, 0.5);
+        }
+
+        .timer-inputs {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .timer-inputs.active {
+            display: flex;
+        }
+
+        .time-input {
+            width: 80px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s ease;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .time-input-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-input-label span {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .laps-container {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            background: white;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .lap-number {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .lap-time {
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .reminder-section {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .reminder-section.active {
+            display: block;
+        }
+
+        .reminder-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .reminder-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .reminder-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .reminder-btn:hover {
+            background: #5a67d8;
+        }
+
+        .reminder-list {
+            margin-top: 15px;
+        }
+
+        .reminder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .reminder-item.triggered {
+            background: #ffeb3b;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .delete-reminder {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
+            display: none;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a67d8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('stopwatch')">Stopwatch</button>
+            <button class="mode-btn" onclick="switchMode('timer')">Timer</button>
+            <button class="mode-btn" onclick="switchMode('reminder')">Reminder</button>
+        </div>
+
+        <div class="display">
+            <div class="time-display">
+                <span id="mainDisplay">00:00:00</span>
+                <span class="milliseconds" id="msDisplay">.00</span>
+            </div>
+        </div>
+
+        <div class="timer-inputs" id="timerInputs">
+            <div class="time-input-label">
+                <input type="number" class="time-input" id="hoursInput" min="0" max="99" value="0">
+                <span>Hours</span>
+            </div>
+            <div class="time-input-label">
+                <input type="number" class="time-input" id="minutesInput" min="0" max="59" value="0">
+                <span>Minutes</span>
+            </div>
+            <div class="time-input-label">
+                <input type="number" class="time-input" id="secondsInput" min="0" max="59" value="0">
+                <span>Seconds</span>
+            </div>
+        </div>
+
+        <div class="controls" id="controls">
+            <button class="control-btn start-btn" id="startBtn" onclick="startStopwatch()">Start</button>
+            <button class="control-btn pause-btn" id="pauseBtn" onclick="pauseStopwatch()" style="display: none;">Pause</button>
+            <button class="control-btn reset-btn" onclick="resetStopwatch()">Reset</button>
+            <button class="control-btn lap-btn" id="lapBtn" onclick="recordLap()">Lap</button>
+        </div>
+
+        <div class="reminder-section" id="reminderSection">
+            <input type="text" class="reminder-input" id="reminderTime" placeholder="Enter time (e.g., 00:05:00 for 5 minutes)">
+            <input type="text" class="reminder-input" id="reminderMessage" placeholder="Enter reminder message">
+            <button class="reminder-btn" onclick="addReminder()">Add Reminder</button>
+            <div class="reminder-list" id="reminderList"></div>
+        </div>
+
+        <div class="laps-container" id="lapsContainer" style="display: none;"></div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let mode = 'stopwatch';
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval = null;
+        let isRunning = false;
+        let laps = [];
+        let reminders = [];
+        let timerDuration = 0;
+        let timerRemaining = 0;
+
+        function switchMode(newMode) {
+            mode = newMode;
+            resetStopwatch();
+            
+            // Update active button
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide elements based on mode
+            const timerInputs = document.getElementById('timerInputs');
+            const lapBtn = document.getElementById('lapBtn');
+            const reminderSection = document.getElementById('reminderSection');
+            const lapsContainer = document.getElementById('lapsContainer');
+            
+            if (newMode === 'timer') {
+                timerInputs.classList.add('active');
+                lapBtn.style.display = 'none';
+                reminderSection.classList.remove('active');
+                lapsContainer.style.display = 'none';
+            } else if (newMode === 'reminder') {
+                timerInputs.classList.remove('active');
+                lapBtn.style.display = 'none';
+                reminderSection.classList.add('active');
+                lapsContainer.style.display = 'none';
+            } else {
+                timerInputs.classList.remove('active');
+                lapBtn.style.display = 'inline-block';
+                reminderSection.classList.remove('active');
+            }
+        }
+
+        function startStopwatch() {
+            if (!isRunning) {
+                if (mode === 'timer') {
+                    const hours = parseInt(document.getElementById('hoursInput').value) || 0;
+                    const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+                    const seconds = parseInt(document.getElementById('secondsInput').value) || 0;
+                    
+                    if (hours === 0 && minutes === 0 && seconds === 0) {
+                        showNotification('Please set a timer duration', 'error');
+                        return;
+                    }
+                    
+                    timerDuration = (hours * 3600 + minutes * 60 + seconds) * 1000;
+                    timerRemaining = timerDuration;
+                    startTime = Date.now();
+                } else {
+                    startTime = Date.now() - elapsedTime;
+                }
+                
+                timerInterval = setInterval(updateDisplay, 10);
+                isRunning = true;
+                
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-block';
+                
+                if (mode === 'timer') {
+                    document.getElementById('timerInputs').style.display = 'none';
+                }
+            }
+        }
+
+        function pauseStopwatch() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                
+                if (mode === 'timer') {
+                    timerRemaining = timerDuration - elapsedTime;
+                }
+                
+                document.getElementById('startBtn').style.display = 'inline-block';
+                document.getElementById('pauseBtn').style.display = 'none';
+            }
+        }
+
+        function resetStopwatch() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            timerRemaining = 0;
+            laps = [];
+            
+            updateDisplay();
+            
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('lapsContainer').style.display = 'none';
+            document.getElementById('lapsContainer').innerHTML = '';
+            
+            if (mode === 'timer') {
+                document.getElementById('timerInputs').style.display = 'flex';
+                document.getElementById('hoursInput').value = 0;
+                document.getElementById('minutesInput').value = 0;
+                document.getElementById('secondsInput').value = 0;
+            }
+        }
+
+        function updateDisplay() {
+            if (mode === 'timer' && isRunning) {
+                elapsedTime = Date.now() - startTime;
+                const remaining = timerDuration - elapsedTime;
+                
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    document.getElementById('mainDisplay').textContent = '00:00:00';
+                    document.getElementById('msDisplay').textContent = '.00';
+                    showNotification('Timer finished!', 'success');
+                    playSound();
+                    document.getElementById('startBtn').style.display = 'inline-block';
+                    document.getElementById('pauseBtn').style.display = 'none';
+                    document.getElementById('timerInputs').style.display = 'flex';
+                    return;
+                }
+                
+                displayTime(remaining);
+            } else if (mode === 'stopwatch' || mode === 'reminder') {
+                if (isRunning) {
+                    elapsedTime = Date.now() - startTime;
+                }
+                displayTime(elapsedTime);
+                checkReminders();
+            }
+        }
+
+        function displayTime(time) {
+            const totalSeconds = Math.floor(time / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = Math.floor((time % 1000) / 10);
+            
+            document.getElementById('mainDisplay').textContent = 
+                `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            document.getElementById('msDisplay').textContent = `.${pad(milliseconds)}`;
+        }
+
+        function pad(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function recordLap() {
+            if (isRunning && mode === 'stopwatch') {
+                const lapTime = elapsedTime;
+                laps.push(lapTime);
+                
+                const lapsContainer = document.getElementById('lapsContainer');
+                lapsContainer.style.display = 'block';
+                
+                const lapItem = document.createElement('div');
+                lapItem.className = 'lap-item';
+                
+                const totalSeconds = Math.floor(lapTime / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                const milliseconds = Math.floor((lapTime % 1000) / 10);
+                
+                lapItem.innerHTML = `
+                    <span class="lap-number">Lap ${laps.length}</span>
+                    <span class="lap-time">${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(milliseconds)}</span>
+                `;
+                
+                lapsContainer.insertBefore(lapItem, lapsContainer.firstChild);
+            }
+        }
+
+        function addReminder() {
+            const timeInput = document.getElementById('reminderTime').value;
+            const message = document.getElementById('reminderMessage').value;
+            
+            if (!timeInput || !message) {
+                showNotification('Please enter both time and message', 'error');
+                return;
+            }
+            
+            const timeParts = timeInput.split(':');
+            if (timeParts.length !== 3) {
+                showNotification('Please enter time in format HH:MM:SS', 'error');
+                return;
+            }
+            
+            const hours = parseInt(timeParts[0]) || 0;
+            const minutes = parseInt(timeParts[1]) || 0;
+            const seconds = parseInt(timeParts[2]) || 0;
+            const timeInMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+            
+            const reminder = {
+                id: Date.now(),
+                time: timeInMs,
+                message: message,
+                triggered: false
+            };
+            
+            reminders.push(reminder);
+            updateReminderList();
+            
+            document.getElementById('reminderTime').value = '';
+            document.getElementById('reminderMessage').value = '';
+            
+            showNotification('Reminder added!', 'success');
+        }
+
+        function updateReminderList() {
+            const reminderList = document.getElementById('reminderList');
+            reminderList.innerHTML = '';
+            
+            reminders.forEach(reminder => {
+                const reminderItem = document.createElement('div');
+                reminderItem.className = 'reminder-item' + (reminder.triggered ? ' triggered' : '');
+                
+                const totalSeconds = Math.floor(reminder.time / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                reminderItem.innerHTML = `
+                    <span>${pad(hours)}:${pad(minutes)}:${pad(seconds)} - ${reminder.message}</span>
+                    <button class="delete-reminder" onclick="deleteReminder(${reminder.id})">Delete</button>
+                `;
+                
+                reminderList.appendChild(reminderItem);
+            });
+        }
+
+        function deleteReminder(id) {
+            reminders = reminders.filter(r => r.id !== id);
+            updateReminderList();
+        }
+
+        function checkReminders() {
+            if (mode === 'reminder' && isRunning) {
+                reminders.forEach(reminder => {
+                    if (!reminder.triggered && elapsedTime >= reminder.time) {
+                        reminder.triggered = true;
+                        showNotification(`Reminder: ${reminder.message}`, 'reminder');
+                        playSound();
+                        updateReminderList();
+                    }
+                });
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show';
+            
+            if (type === 'error') {
+                notification.style.background = '#e74c3c';
+            } else if (type === 'reminder') {
+                notification.style.background = '#ff9500';
+            } else {
+                notification.style.background = '#4caf50';
+            }
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function playSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 880;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (isRunning) {
+                    pauseStopwatch();
+                } else {
+                    startStopwatch();
+                }
+            } else if (e.code === 'KeyR') {
+                resetStopwatch();
+            } else if (e.code === 'KeyL' && mode === 'stopwatch') {
+                recordLap();
+            }
+        });
+    </script>
+</body>
+</html>
